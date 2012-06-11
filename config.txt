@@ -1,0 +1,13 @@
+# Set stdv mode to PAL (as used in Europe)
+sdtv_mode=2
+# Force the monitor to HDMI mode so that sound will be sent over HDMI cable
+hdmi_drive=2
+# Set monitor mode to DMT
+hdmi_group=1
+# Set monitor resolution to 1080p60
+hdmi_mode=16
+#
+overscan_left=0
+overscan_right=0
+overscan_top=0
+overscan_bottom=0
