@@ -6,8 +6,5 @@ hdmi_drive=2
 hdmi_group=1
 # Set monitor resolution to 1080p60
 hdmi_mode=16
-#
-overscan_left=0
-overscan_right=0
-overscan_top=0
-overscan_bottom=0
+# No overscan
+disable_overscan=1
