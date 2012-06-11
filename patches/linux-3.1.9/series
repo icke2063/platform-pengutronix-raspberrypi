@@ -52,3 +52,6 @@
 0052-Added-support-for-USB-webcams.patch
 0053-Enable-ipv6-due-to-popular-demand.patch
 0054-Fix-regression-in-debug-kernel-config-options.patch
+0055-bcm2835-ctl-fix-alsamixer-control.patch
+0056-bcm2835-ctl-limit-maximal-volume-to-4db.patch
+0057-Add-iptables-and-devtmpfs_mount-to-non-cutdown-confi.patch
