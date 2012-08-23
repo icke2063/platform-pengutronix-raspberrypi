@@ -1,8 +1,0 @@
-## SECTION=image
-
-config IMAGE_BOOT_VFAT
-	bool
-	select IMAGE_VFAT_TOOLS
-	select KERNEL
-	prompt "Generate images/boot.vfat"
-
