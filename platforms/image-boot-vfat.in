@@ -8,3 +8,35 @@ config IMAGE_BOOT_VFAT
 	prompt "Generate image/boot.vfat"
 	help
 	  FIXME
+
+if IMAGE_BOOT_VFAT
+
+choice
+	prompt "startup configuration"
+	default IMAGE_BOOT_VFAT_START_224
+
+	config IMAGE_BOOT_VFAT_START_128
+		bool
+		prompt "arm128_start.elf"
+
+	config IMAGE_BOOT_VFAT_START_192
+		bool
+		prompt "arm192_start.elf"
+
+	config IMAGE_BOOT_VFAT_START_224
+		bool
+		prompt "arm224_start.elf"
+
+	config IMAGE_BOOT_VFAT_START_240
+		bool
+		prompt "arm240_start.elf"
+endchoice
+
+config IMAGE_BOOT_VFAT_START
+	string
+	default "arm128" if IMAGE_BOOT_VFAT_START_128
+	default "arm192" if IMAGE_BOOT_VFAT_START_192
+	default "arm224" if IMAGE_BOOT_VFAT_START_224
+	default "arm240" if IMAGE_BOOT_VFAT_START_240
+
+endif

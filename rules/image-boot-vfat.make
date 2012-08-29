@@ -38,7 +38,8 @@ endef
 IMAGE_BOOT_VFAT_ENV := \
 	FILES="$(call squote_and_comma,$(IMAGE_BOOT_VFAT_DATA))" \
 	HEADER=$(PTXDIST_PLATFORMCONFIGDIR)/first32k.bin \
-	KERNEL=linuximage
+	KERNEL=linuximage \
+	START=$(PTXDIST_PLATFORMCONFIGDIR)/firmware/$(PTXCONF_IMAGE_BOOT_VFAT_START)_start.elf
 
 $(IMAGE_BOOT_VFAT_IMAGE):
 	@$(call targetinfo)
