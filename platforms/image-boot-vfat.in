@@ -3,7 +3,8 @@
 config IMAGE_BOOT_VFAT
 	tristate
 	select HOST_GENIMAGE
-	select HOST_MTOOLS
+	select IMAGE_VFAT_TOOLS
+	select KERNEL
 	prompt "Generate image/boot.vfat"
 	help
 	  FIXME
