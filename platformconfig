@@ -19,7 +19,7 @@ PTXCONF__platformconfig_MAGIC__=y
 # ------------------------------------
 #
 PTXCONF_PLATFORM="pengutronix-raspberrypi"
-PTXCONF_PLATFORM_VERSION="master"
+PTXCONF_PLATFORM_VERSION="-2012.07.0+master"
 
 #
 # architecture                  
