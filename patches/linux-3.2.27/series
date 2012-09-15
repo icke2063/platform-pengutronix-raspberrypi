@@ -1,9 +1,9 @@
 # umpf-base: v3.2.27
 # umpf-name: raspberrypi
-# umpf-version: raspberrypi/20120829
+# umpf-version: raspberrypi/20120915
 # umpf-topic: rpi-3.2.27
-# umpf-hashinfo: 307d9fbb18900c17bc9deeb4020c5ed599053947
-# umpf-topic-range: 8524c7870680e93cb3d8f1d3f90f927c3c0686b6..61e598fd13635f61c8e6b8cd16a5ae07e7a57cc2
+# umpf-hashinfo: ce4ab6222b47270b1597ce3cd7c0a354346d348d
+# umpf-topic-range: 8524c7870680e93cb3d8f1d3f90f927c3c0686b6..97fce38cde710b9e4d6c7a17a484deacfc3d25b6
 0001-Add-dwc_otg-driver.patch
 0002-Main-bcm2708-linux-port.patch
 0003-bcm2708-watchdog-driver.patch
@@ -136,7 +136,22 @@
 0130-Turn-on-microframe_schedule-by-default.-Can-still-be.patch
 0131-Add-low-latency-mode-to-sdcard-driver.-Enable-with-s.patch
 0132-Fix-build-for-non-preempt-case.-Fix-warning.patch
-# umpf-release: raspberrypi/20120829
-# umpf-topic-range: 61e598fd13635f61c8e6b8cd16a5ae07e7a57cc2..de2baa11587cc730c270d3f4fd6a703d215d6fe5
-0201-Release-raspberrypi-20120829.patch
+0133-Add-config-options-to-allow-iotop-to-run.patch
+0134-Fix-for-vmalloc-failure-with-modprobe-and-cutdown-ke.patch
+0135-Enable-low-latency-mode-by-default-in-sdcard-driver..patch
+0136-Add-FIQ-patch-to-dwc_otg-driver.-Enable-with-dwc_otg.patch
+0137-Fix-typo.patch
+0138-Add-non-mainline-source-for-rtl8188cu-wireless-drive.patch
+0139-Add-verious-user-config-requests.patch
+0140-Don-t-believe-KDIR-is-required-when-building-as-part.patch
+0141-Avoid-dynamic-memory-allocation-for-channel-lock-in-.patch
+0142-Add-cpufreq-driver.patch
+0143-Tidy-up-debug-messages.patch
+0144-Fix-for-KALLSYMS_EXTRA_PASS-requirement.-Thanks-asb-.patch
+0145-Enable-fiq-fix-by-default.-Add-NAK-holdoff-scheme.-E.patch
+0146-Added-hwmon-thermal-driver-for-reporting-core-temper.patch
+0147-Add-config-options-for-thermal-sensor-L2TP-RT2800USB.patch
+# umpf-release: raspberrypi/20120915
+# umpf-topic-range: 97fce38cde710b9e4d6c7a17a484deacfc3d25b6..9fd2c1aa3e6e8a6b43ebbd6fce020dce02efb9b5
+0201-Release-raspberrypi-20120915.patch
 # umpf-end
