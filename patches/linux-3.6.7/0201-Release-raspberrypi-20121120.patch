@@ -1,0 +1,22 @@
+From: Michael Olbrich <m.olbrich@pengutronix.de>
+Date: Tue, 20 Nov 2012 07:45:52 +0100
+Subject: [PATCH] Release raspberrypi/20121120
+
+Signed-off-by: Michael Olbrich <m.olbrich@pengutronix.de>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 07f2308..816cd53 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ VERSION = 3
+ PATCHLEVEL = 6
+ SUBLEVEL = 7
+-EXTRAVERSION =
++EXTRAVERSION =-20121120
+ NAME = Terrified Chipmunk
+ 
+ # *DOCUMENTATION*
