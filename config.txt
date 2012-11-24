@@ -8,3 +8,5 @@ hdmi_group=1
 hdmi_mode=16
 # No overscan
 disable_overscan=1
+# GPU memory in megabyte
+gpu_mem=@GPU_MEM@

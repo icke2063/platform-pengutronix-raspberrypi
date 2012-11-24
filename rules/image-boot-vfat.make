@@ -22,7 +22,8 @@ IMAGE_BOOT_VFAT_IMAGE	:= $(IMAGEDIR)/boot.vfat
 IMAGE_BOOT_VFAT_DATA	:= \
 	$(wildcard $(PTXDIST_PLATFORMCONFIGDIR)/firmware/*.bin) \
 	$(wildcard $(PTXDIST_PLATFORMCONFIGDIR)/firmware/*.elf) \
-	$(PTXDIST_PLATFORMCONFIGDIR)/config.txt \
+	$(wildcard $(PTXDIST_PLATFORMCONFIGDIR)/firmware/*.dat) \
+	$(PTXDIST_TEMPDIR)/config.txt \
 	$(PTXDIST_PLATFORMCONFIGDIR)/cmdline.txt
 IMAGE_BOOT_VFAT_CONFIG	:= boot-vfat.config
 
@@ -43,6 +44,9 @@ IMAGE_BOOT_VFAT_ENV := \
 
 $(IMAGE_BOOT_VFAT_IMAGE):
 	@$(call targetinfo)
+	@GPU_MEM=$(PTXCONF_IMAGE_BOOT_VFAT_GPU_MEM) \
+		ptxd_replace_magic "$(PTXDIST_PLATFORMCONFIGDIR)/config.txt" > \
+		"$(PTXDIST_TEMPDIR)/config.txt"
 	@$(call image/genimage, IMAGE_BOOT_VFAT)
 	@$(call finish)
 

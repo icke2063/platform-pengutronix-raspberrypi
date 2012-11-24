@@ -11,32 +11,11 @@ config IMAGE_BOOT_VFAT
 
 if IMAGE_BOOT_VFAT
 
-choice
-	prompt "startup configuration"
-	default IMAGE_BOOT_VFAT_START_224
-
-	config IMAGE_BOOT_VFAT_START_128
-		bool
-		prompt "arm128_start.elf"
-
-	config IMAGE_BOOT_VFAT_START_192
-		bool
-		prompt "arm192_start.elf"
-
-	config IMAGE_BOOT_VFAT_START_224
-		bool
-		prompt "arm224_start.elf"
-
-	config IMAGE_BOOT_VFAT_START_240
-		bool
-		prompt "arm240_start.elf"
-endchoice
-
-config IMAGE_BOOT_VFAT_START
-	string
-	default "arm128" if IMAGE_BOOT_VFAT_START_128
-	default "arm192" if IMAGE_BOOT_VFAT_START_192
-	default "arm224" if IMAGE_BOOT_VFAT_START_224
-	default "arm240" if IMAGE_BOOT_VFAT_START_240
-
+config IMAGE_BOOT_VFAT_GPU_MEM
+	int
+	default 64
+	prompt "GPU memory"
+	help
+	  GPU memory in megabyte. Sets the memory split between the ARM
+	  and GPU. ARM gets the remaining memory. Min 16.
 endif
