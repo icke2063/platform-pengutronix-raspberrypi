@@ -1,0 +1,38 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Tue, 2 Apr 2013 13:53:40 +0100
+Subject: [PATCH] Move definition of fiq_fix_enable to bcm2708.c to allow
+ building without dwc_otg
+
+---
+ arch/arm/mach-bcm2708/bcm2708.c           | 2 +-
+ drivers/usb/host/dwc_otg/dwc_otg_driver.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/mach-bcm2708/bcm2708.c b/arch/arm/mach-bcm2708/bcm2708.c
+index 7294aa0..3f9d32d 100644
+--- a/arch/arm/mach-bcm2708/bcm2708.c
++++ b/arch/arm/mach-bcm2708/bcm2708.c
+@@ -366,7 +366,7 @@ static struct resource bcm2708_usb_resources[] = {
+ 	       },
+ };
+ 
+-extern bool fiq_fix_enable;
++bool fiq_fix_enable = true;
+ 
+ static struct resource bcm2708_usb_resources_no_fiq_fix[] = {
+ 	[0] = {
+diff --git a/drivers/usb/host/dwc_otg/dwc_otg_driver.c b/drivers/usb/host/dwc_otg/dwc_otg_driver.c
+index 25110ca..cea8fcb 100644
+--- a/drivers/usb/host/dwc_otg/dwc_otg_driver.c
++++ b/drivers/usb/host/dwc_otg/dwc_otg_driver.c
+@@ -240,8 +240,8 @@ static struct dwc_otg_driver_module_params dwc_otg_module_params = {
+ 	.adp_enable = -1,
+ };
+ 
+-//Global variable to switch the fiq fix on or off
+-bool fiq_fix_enable = true;
++//Global variable to switch the fiq fix on or off (declared in bcm2708.c)
++extern bool fiq_fix_enable;
+ 
+ //Global variable to switch the nak holdoff on or off
+ bool nak_holdoff_enable = true;

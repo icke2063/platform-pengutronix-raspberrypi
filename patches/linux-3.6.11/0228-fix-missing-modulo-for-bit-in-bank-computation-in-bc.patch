@@ -1,0 +1,22 @@
+From: Zeta <zeta@sagittarii.fr>
+Date: Sat, 2 Mar 2013 15:15:39 +0100
+Subject: [PATCH] fix missing modulo for bit in bank computation, in bcm2708
+ gpio irq mask
+
+---
+ arch/arm/mach-bcm2708/bcm2708_gpio.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm/mach-bcm2708/bcm2708_gpio.c b/arch/arm/mach-bcm2708/bcm2708_gpio.c
+index c8161e1..2d87250 100644
+--- a/arch/arm/mach-bcm2708/bcm2708_gpio.c
++++ b/arch/arm/mach-bcm2708/bcm2708_gpio.c
+@@ -173,6 +173,8 @@ static void bcm2708_gpio_irq_mask(struct irq_data *d)
+ 	unsigned long rising = readl(gpio->base + GPIOREN(gb));
+ 	unsigned long falling = readl(gpio->base + GPIOFEN(gb));
+ 
++	gn = gn % 32;
++
+ 	writel(rising & ~(1 << gn), gpio->base + GPIOREN(gb));
+ 	writel(falling & ~(1 << gn), gpio->base + GPIOFEN(gb));
+ }

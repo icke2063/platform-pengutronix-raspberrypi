@@ -1,0 +1,295 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Thu, 7 Feb 2013 15:39:30 +0000
+Subject: [PATCH] Update vchiq to version supporting querying peer version of
+ services. Should be backwards compatible
+
+---
+ drivers/misc/vc04_services/interface/vchi/vchi.h   |   3 +
+ .../vc04_services/interface/vchiq_arm/vchiq_cfg.h  |   2 +-
+ .../vc04_services/interface/vchiq_arm/vchiq_core.c | 111 +++++++++++++++++++--
+ .../vc04_services/interface/vchiq_arm/vchiq_core.h |   5 +
+ .../vc04_services/interface/vchiq_arm/vchiq_if.h   |   3 +
+ .../vc04_services/interface/vchiq_arm/vchiq_shim.c |  13 +++
+ 6 files changed, 126 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/misc/vc04_services/interface/vchi/vchi.h b/drivers/misc/vc04_services/interface/vchi/vchi.h
+index ee908e2..cee5291 100644
+--- a/drivers/misc/vc04_services/interface/vchi/vchi.h
++++ b/drivers/misc/vc04_services/interface/vchi/vchi.h
+@@ -208,6 +208,9 @@ extern int32_t vchi_service_open( VCHI_INSTANCE_T instance_handle,
+                                   SERVICE_CREATION_T *setup,
+                                   VCHI_SERVICE_HANDLE_T *handle);
+ 
++extern int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle,
++                                      short *peer_version );
++
+ // Routine to close a named service
+ extern int32_t vchi_service_close( const VCHI_SERVICE_HANDLE_T handle );
+ 
+diff --git a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_cfg.h b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_cfg.h
+index 2489d9d..493c86c 100644
+--- a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_cfg.h
++++ b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_cfg.h
+@@ -36,7 +36,7 @@
+ 
+ #define VCHIQ_MAGIC              VCHIQ_MAKE_FOURCC('V', 'C', 'H', 'I')
+ /* The version of VCHIQ - change with any non-trivial change */
+-#define VCHIQ_VERSION            5
++#define VCHIQ_VERSION            6
+ /* The minimum compatible version - update to match VCHIQ_VERSION with any
+ ** incompatible change */
+ #define VCHIQ_VERSION_MIN        3
+diff --git a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.c b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.c
+index 4b8d7cf..5470470 100644
+--- a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.c
++++ b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.c
+@@ -58,6 +58,10 @@ struct vchiq_open_payload {
+ 	short version_min;
+ };
+ 
++struct vchiq_openack_payload {
++	short version;
++};
++
+ /* we require this for consistency between endpoints */
+ vchiq_static_assert(sizeof(VCHIQ_HEADER_T) == 8);
+ vchiq_static_assert(IS_POW2(sizeof(VCHIQ_HEADER_T)));
+@@ -1402,6 +1406,7 @@ pause_bulks(VCHIQ_STATE_T *state)
+ static void
+ resume_bulks(VCHIQ_STATE_T *state)
+ {
++	int i;
+ 	if (unlikely(atomic_dec_return(&pause_bulks_count) != 0)) {
+ 		WARN_ON_ONCE(1);
+ 		atomic_set(&pause_bulks_count, 0);
+@@ -1410,6 +1415,34 @@ resume_bulks(VCHIQ_STATE_T *state)
+ 
+ 	/* Allow bulk transfers from all services */
+ 	mutex_unlock(&state->bulk_transfer_mutex);
++
++	if (state->deferred_bulks == 0)
++		return;
++
++	/* Deal with any bulks which had to be deferred due to being in
++	 * paused state.  Don't try to match up to number of deferred bulks
++	 * in case we've had something come and close the service in the
++	 * interim - just process all bulk queues for all services */
++	vchiq_log_info(vchiq_core_log_level, "%s: processing %d deferred bulks",
++		__func__, state->deferred_bulks);
++
++	for (i = 0; i < state->unused_service; i++) {
++		VCHIQ_SERVICE_T *service = state->services[i];
++		int resolved_rx = 0;
++		int resolved_tx = 0;
++		if (!service || (service->srvstate != VCHIQ_SRVSTATE_OPEN))
++			continue;
++
++		mutex_lock(&service->bulk_mutex);
++		resolved_rx = resolve_bulks(service, &service->bulk_rx);
++		resolved_tx = resolve_bulks(service, &service->bulk_tx);
++		mutex_unlock(&service->bulk_mutex);
++		if (resolved_rx)
++			notify_bulks(service, &service->bulk_rx, 1);
++		if (resolved_tx)
++			notify_bulks(service, &service->bulk_tx, 1);
++	}
++	state->deferred_bulks = 0;
+ }
+ 
+ static int
+@@ -1425,7 +1458,7 @@ parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
+ 	type = VCHIQ_MSG_TYPE(msgid);
+ 	localport = VCHIQ_MSG_DSTPORT(msgid);
+ 	remoteport = VCHIQ_MSG_SRCPORT(msgid);
+-	if (size == sizeof(struct vchiq_open_payload)) {
++	if (size >= sizeof(struct vchiq_open_payload)) {
+ 		const struct vchiq_open_payload *payload =
+ 			(struct vchiq_open_payload *)header->data;
+ 		unsigned int fourcc;
+@@ -1458,7 +1491,17 @@ parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
+ 				unlock_service(service);
+ 				goto fail_open;
+ 			}
++			service->peer_version = version;
++
+ 			if (service->srvstate == VCHIQ_SRVSTATE_LISTENING) {
++				struct vchiq_openack_payload ack_payload = {
++					service->version
++				};
++				VCHIQ_ELEMENT_T body = {
++					&ack_payload,
++					sizeof(ack_payload)
++				};
++
+ 				/* Acknowledge the OPEN */
+ 				if (service->sync) {
+ 					if (queue_message_sync(state, NULL,
+@@ -1466,7 +1509,8 @@ parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
+ 							VCHIQ_MSG_OPENACK,
+ 							service->localport,
+ 							remoteport),
+-						NULL, 0, 0, 0) == VCHIQ_RETRY)
++						&body, 1, sizeof(ack_payload),
++						0) == VCHIQ_RETRY)
+ 						goto bail_not_ready;
+ 				} else {
+ 					if (queue_message(state, NULL,
+@@ -1474,7 +1518,8 @@ parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
+ 							VCHIQ_MSG_OPENACK,
+ 							service->localport,
+ 							remoteport),
+-						NULL, 0, 0, 0) == VCHIQ_RETRY)
++						&body, 1, sizeof(ack_payload),
++						0) == VCHIQ_RETRY)
+ 						goto bail_not_ready;
+ 				}
+ 
+@@ -1639,10 +1684,16 @@ parse_rx_slots(VCHIQ_STATE_T *state)
+ 				goto bail_not_ready;
+ 			break;
+ 		case VCHIQ_MSG_OPENACK:
++			if (size >= sizeof(struct vchiq_openack_payload)) {
++				const struct vchiq_openack_payload *payload =
++					(struct vchiq_openack_payload *)
++					header->data;
++				service->peer_version = payload->version;
++			}
+ 			vchiq_log_info(vchiq_core_log_level,
+-				"%d: prs OPENACK@%x (%d->%d)",
+-				state->id, (unsigned int)header,
+-				remoteport, localport);
++				"%d: prs OPENACK@%x,%x (%d->%d) v:%d",
++				state->id, (unsigned int)header, size,
++				remoteport, localport, service->peer_version);
+ 			if (service->srvstate ==
+ 				VCHIQ_SRVSTATE_OPENING) {
+ 				service->remoteport = remoteport;
+@@ -1743,7 +1794,22 @@ parse_rx_slots(VCHIQ_STATE_T *state)
+ 
+ 				queue->remote_insert++;
+ 
+-				if (state->conn_state ==
++				if (atomic_read(&pause_bulks_count)) {
++					state->deferred_bulks++;
++					vchiq_log_info(vchiq_core_log_level,
++						"%s: deferring bulk (%d)",
++						__func__,
++						state->deferred_bulks);
++					if (state->conn_state !=
++						VCHIQ_CONNSTATE_PAUSE_SENT)
++						vchiq_log_error(
++							vchiq_core_log_level,
++							"%s: bulks paused in "
++							"unexpected state %s",
++							__func__,
++							conn_state_names[
++							state->conn_state]);
++				} else if (state->conn_state ==
+ 					VCHIQ_CONNSTATE_CONNECTED) {
+ 					DEBUG_TRACE(PARSE_LINE);
+ 					resolved = resolve_bulks(service,
+@@ -2064,10 +2130,16 @@ sync_func(void *v)
+ 
+ 		switch (type) {
+ 		case VCHIQ_MSG_OPENACK:
++			if (size >= sizeof(struct vchiq_openack_payload)) {
++				const struct vchiq_openack_payload *payload =
++					(struct vchiq_openack_payload *)
++					header->data;
++				service->peer_version = payload->version;
++			}
+ 			vchiq_log_info(vchiq_sync_log_level,
+-				"%d: sf OPENACK@%x (%d->%d)",
+-				state->id, (unsigned int)header,
+-				remoteport, localport);
++				"%d: sf OPENACK@%x,%x (%d->%d) v:%d",
++				state->id, (unsigned int)header, size,
++				remoteport, localport, service->peer_version);
+ 			if (service->srvstate == VCHIQ_SRVSTATE_OPENING) {
+ 				service->remoteport = remoteport;
+ 				vchiq_set_service_state(service,
+@@ -3329,6 +3401,25 @@ release_message_sync(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
+ }
+ 
+ VCHIQ_STATUS_T
++vchiq_get_peer_version(VCHIQ_SERVICE_HANDLE_T handle, short *peer_version)
++{
++   VCHIQ_STATUS_T status = VCHIQ_ERROR;
++   VCHIQ_SERVICE_T *service = find_service_by_handle(handle);
++
++   if (!service ||
++      (vchiq_check_service(service) != VCHIQ_SUCCESS) ||
++      !peer_version)
++      goto exit;
++   *peer_version = service->peer_version;
++   status = VCHIQ_SUCCESS;
++
++exit:
++   if (service)
++      unlock_service(service);
++   return status;
++}
++
++VCHIQ_STATUS_T
+ vchiq_get_config(VCHIQ_INSTANCE_T instance,
+ 	int config_size, VCHIQ_CONFIG_T *pconfig)
+ {
+diff --git a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.h b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.h
+index 6952819..bddfc6a 100644
+--- a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.h
++++ b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_core.h
+@@ -294,6 +294,7 @@ typedef struct vchiq_service_struct {
+ 	atomic_t poll_flags;
+ 	short version;
+ 	short version_min;
++	short peer_version;
+ 
+ 	VCHIQ_STATE_T *state;
+ 	VCHIQ_INSTANCE_T instance;
+@@ -484,6 +485,10 @@ struct vchiq_state_struct {
+ 	/* Signalled when a free data slot becomes available. */
+ 	struct semaphore data_quota_event;
+ 
++	/* Incremented when there are bulk transfers which cannot be processed
++	 * whilst paused and must be processed on resume */
++	int deferred_bulks;
++
+ 	struct state_stats_struct {
+ 		int slot_stalls;
+ 		int data_stalls;
+diff --git a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_if.h b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_if.h
+index 3ef118f..c2c2d53 100644
+--- a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_if.h
++++ b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_if.h
+@@ -179,4 +179,7 @@ extern VCHIQ_STATUS_T vchiq_remote_release(VCHIQ_INSTANCE_T instance);
+ extern VCHIQ_STATUS_T vchiq_dump_phys_mem(VCHIQ_SERVICE_HANDLE_T service,
+ 	void *ptr, size_t num_bytes);
+ 
++extern VCHIQ_STATUS_T vchiq_get_peer_version(VCHIQ_SERVICE_HANDLE_T handle,
++      short *peer_version);
++
+ #endif /* VCHIQ_IF_H */
+diff --git a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_shim.c b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_shim.c
+index e682013..f752f8d 100644
+--- a/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_shim.c
++++ b/drivers/misc/vc04_services/interface/vchiq_arm/vchiq_shim.c
+@@ -712,6 +712,19 @@ int32_t vchi_service_destroy(const VCHI_SERVICE_HANDLE_T handle)
+ }
+ EXPORT_SYMBOL(vchi_service_destroy);
+ 
++int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle, short *peer_version )
++{
++   int32_t ret = -1;
++   SHIM_SERVICE_T *service = (SHIM_SERVICE_T *)handle;
++   if(service)
++   {
++      VCHIQ_STATUS_T status = vchiq_get_peer_version(service->handle, peer_version);
++      ret = vchiq_status_to_vchi( status );
++   }
++   return ret;
++}
++EXPORT_SYMBOL(vchi_get_peer_version);
++
+ /* ----------------------------------------------------------------------
+  * read a uint32_t from buffer.
+  * network format is defined to be little endian

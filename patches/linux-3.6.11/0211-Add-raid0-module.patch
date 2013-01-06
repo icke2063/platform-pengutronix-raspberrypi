@@ -1,0 +1,20 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Fri, 1 Feb 2013 19:54:05 +0000
+Subject: [PATCH] Add raid0 module
+
+---
+ arch/arm/configs/bcmrpi_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm/configs/bcmrpi_defconfig b/arch/arm/configs/bcmrpi_defconfig
+index 62985f4..570a312 100644
+--- a/arch/arm/configs/bcmrpi_defconfig
++++ b/arch/arm/configs/bcmrpi_defconfig
+@@ -361,6 +361,7 @@ CONFIG_SCSI_MULTI_LUN=y
+ CONFIG_SCSI_ISCSI_ATTRS=y
+ CONFIG_ISCSI_TCP=m
+ CONFIG_MD=y
++CONFIG_MD_RAID0=m
+ CONFIG_BLK_DEV_DM=m
+ CONFIG_DM_CRYPT=m
+ CONFIG_DM_SNAPSHOT=m
