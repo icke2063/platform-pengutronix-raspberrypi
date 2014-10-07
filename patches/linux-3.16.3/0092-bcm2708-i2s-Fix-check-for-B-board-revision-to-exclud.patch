@@ -1,0 +1,22 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Sat, 30 Aug 2014 16:24:19 +0100
+Subject: [PATCH] bcm2708-i2s: Fix check for B+ board revision to exclude
+ flags like warranty bit
+
+---
+ sound/soc/bcm/bcm2708-i2s.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/soc/bcm/bcm2708-i2s.c b/sound/soc/bcm/bcm2708-i2s.c
+index 2ea78c94a10a..902398414096 100644
+--- a/sound/soc/bcm/bcm2708-i2s.c
++++ b/sound/soc/bcm/bcm2708-i2s.c
+@@ -352,7 +352,7 @@ static void bcm2708_i2s_setup_gpio(void)
+ 	/* SPI is on different GPIOs on different boards */
+         /* for Raspberry Pi B+, this is pin GPIO18-21, for original on 28-31 */
+ 	if (bcm2708_i2s_gpio==BCM2708_I2S_GPIO_AUTO) {	
+-		if (system_rev >= 0x10) {
++		if ((system_rev & 0xffffff) >= 0x10) {
+ 			/* Model B+ */
+ 			pinconfig=BCM2708_I2S_GPIO_PIN18;
+ 		} else {

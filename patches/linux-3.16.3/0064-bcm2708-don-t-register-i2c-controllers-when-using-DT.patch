@@ -1,0 +1,43 @@
+From: notro <notro@tronnes.org>
+Date: Tue, 29 Jul 2014 11:05:18 +0200
+Subject: [PATCH] bcm2708: don't register i2c controllers when using DT
+
+The devices for the i2c controllers are in the Device Tree.
+Only register devices when not using DT.
+
+Signed-off-by: Noralf Tronnes <notro@tronnes.org>
+---
+ arch/arm/mach-bcm2708/bcm2708.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-bcm2708/bcm2708.c b/arch/arm/mach-bcm2708/bcm2708.c
+index a4286e9ed332..a19f54d3ab13 100644
+--- a/arch/arm/mach-bcm2708/bcm2708.c
++++ b/arch/arm/mach-bcm2708/bcm2708.c
+@@ -560,6 +560,7 @@ static struct spi_board_info bcm2708_spi_devices[] = {
+ };
+ #endif
+ 
++#ifndef CONFIG_OF
+ static struct resource bcm2708_bsc0_resources[] = {
+ 	{
+ 		.start = BSC0_BASE,
+@@ -598,6 +599,7 @@ static struct platform_device bcm2708_bsc1_device = {
+ 	.num_resources = ARRAY_SIZE(bcm2708_bsc1_resources),
+ 	.resource = bcm2708_bsc1_resources,
+ };
++#endif
+ 
+ static struct platform_device bcm2835_hwmon_device = {
+ 	.name = "bcm2835_hwmon",
+@@ -828,8 +830,8 @@ void __init bcm2708_init(void)
+ 		bcm_register_device(&bcm2708_alsa_devices[i]);
+ 
+ 	bcm_register_device_dt(&bcm2708_spi_device);
+-	bcm_register_device(&bcm2708_bsc0_device);
+-	bcm_register_device(&bcm2708_bsc1_device);
++	bcm_register_device_dt(&bcm2708_bsc0_device);
++	bcm_register_device_dt(&bcm2708_bsc1_device);
+ 
+ 	bcm_register_device(&bcm2835_hwmon_device);
+ 	bcm_register_device(&bcm2835_thermal_device);

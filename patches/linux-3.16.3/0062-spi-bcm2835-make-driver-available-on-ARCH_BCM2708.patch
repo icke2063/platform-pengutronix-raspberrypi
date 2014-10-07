@@ -1,0 +1,24 @@
+From: notro <notro@tronnes.org>
+Date: Sun, 27 Jul 2014 20:14:05 +0200
+Subject: [PATCH] spi: bcm2835: make driver available on ARCH_BCM2708
+
+Make this driver available on ARCH_BCM2708
+
+Signed-off-by: Noralf Tronnes <notro@tronnes.org>
+---
+ drivers/spi/Kconfig |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/spi/Kconfig b/drivers/spi/Kconfig
+index cb20594ae34c..54aac0fc1878 100644
+--- a/drivers/spi/Kconfig
++++ b/drivers/spi/Kconfig
+@@ -76,7 +76,7 @@ config SPI_ATMEL
+ 
+ config SPI_BCM2835
+ 	tristate "BCM2835 SPI controller"
+-	depends on ARCH_BCM2835 || COMPILE_TEST
++	depends on ARCH_BCM2835 || ARCH_BCM2708 || COMPILE_TEST
+ 	help
+ 	  This selects a driver for the Broadcom BCM2835 SPI master.
+ 

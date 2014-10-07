@@ -1,0 +1,108 @@
+From: Julian Scheel <julian@jusst.de>
+Date: Thu, 14 Aug 2014 08:40:24 +0200
+Subject: [PATCH] bcm2708: Add extension to configure internal pulls
+
+The bcm2708 gpio controller supports internal pulls to be used as pull-up,
+pull-down or being entirely disabled. As it can be useful for a driver to
+change the pull configuration from it's default pull-down state, add an
+extension which allows configuring the pull per gpio.
+
+Signed-off-by: Julian Scheel <julian@jusst.de>
+---
+ arch/arm/mach-bcm2708/bcm2708_gpio.c  |   38 +++++++++++++++++++++++++++++++++
+ include/linux/platform_data/bcm2708.h |   23 ++++++++++++++++++++
+ 2 files changed, 61 insertions(+)
+ create mode 100644 include/linux/platform_data/bcm2708.h
+
+diff --git a/arch/arm/mach-bcm2708/bcm2708_gpio.c b/arch/arm/mach-bcm2708/bcm2708_gpio.c
+index 5fb845aff8ce..86cafa73d6f4 100644
+--- a/arch/arm/mach-bcm2708/bcm2708_gpio.c
++++ b/arch/arm/mach-bcm2708/bcm2708_gpio.c
+@@ -11,6 +11,7 @@
+ 
+ #include <linux/spinlock.h>
+ #include <linux/module.h>
++#include <linux/delay.h>
+ #include <linux/list.h>
+ #include <linux/io.h>
+ #include <linux/irq.h>
+@@ -21,6 +22,8 @@
+ #include <linux/platform_device.h>
+ #include <mach/platform.h>
+ 
++#include <linux/platform_data/bcm2708.h>
++
+ #define BCM_GPIO_DRIVER_NAME "bcm2708_gpio"
+ #define DRIVER_NAME BCM_GPIO_DRIVER_NAME
+ #define BCM_GPIO_USE_IRQ 1
+@@ -131,6 +134,41 @@ static void bcm2708_gpio_set(struct gpio_chip *gc, unsigned offset, int value)
+ 		writel(1 << gpio_field_offset, gpio->base + GPIOCLR(gpio_bank));
+ }
+ 
++/**********************
++ * extension to configure pullups
++ */
++int bcm2708_gpio_setpull(struct gpio_chip *gc, unsigned offset,
++		bcm2708_gpio_pull_t value)
++{
++	struct bcm2708_gpio *gpio = container_of(gc, struct bcm2708_gpio, gc);
++	unsigned gpio_bank = offset / 32;
++	unsigned gpio_field_offset = (offset - 32 * gpio_bank);
++
++	if (offset >= BCM2708_NR_GPIOS)
++		return -EINVAL;
++
++	switch (value) {
++	case BCM2708_PULL_UP:
++		writel(2, gpio->base + GPIOUD(0));
++		break;
++	case BCM2708_PULL_DOWN:
++		writel(1, gpio->base + GPIOUD(0));
++		break;
++	case BCM2708_PULL_OFF:
++		writel(0, gpio->base + GPIOUD(0));
++		break;
++	}
++
++	udelay(5);
++	writel(1 << gpio_field_offset, gpio->base + GPIOUDCLK(gpio_bank));
++	udelay(5);
++	writel(0, gpio->base + GPIOUD(0));
++	writel(0 << gpio_field_offset, gpio->base + GPIOUDCLK(gpio_bank));
++
++	return 0;
++}
++EXPORT_SYMBOL(bcm2708_gpio_setpull);
++
+ /*************************************************************************************************************************
+  * bcm2708 GPIO IRQ
+  */
+diff --git a/include/linux/platform_data/bcm2708.h b/include/linux/platform_data/bcm2708.h
+new file mode 100644
+index 000000000000..fb69624ccef0
+--- /dev/null
++++ b/include/linux/platform_data/bcm2708.h
+@@ -0,0 +1,23 @@
++/*
++ * include/linux/platform_data/bcm2708.h
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * (C) 2014 Julian Scheel <julian@jusst.de>
++ *
++ */
++#ifndef __BCM2708_H_
++#define __BCM2708_H_
++
++typedef enum {
++	BCM2708_PULL_OFF,
++	BCM2708_PULL_UP,
++	BCM2708_PULL_DOWN
++} bcm2708_gpio_pull_t;
++
++extern int bcm2708_gpio_setpull(struct gpio_chip *gc, unsigned offset,
++		bcm2708_gpio_pull_t value);
++
++#endif

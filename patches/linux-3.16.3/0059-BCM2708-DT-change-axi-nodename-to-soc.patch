@@ -1,0 +1,26 @@
+From: notro <notro@tronnes.org>
+Date: Fri, 18 Jul 2014 18:15:57 +0200
+Subject: [PATCH] BCM2708: DT: change 'axi' nodename to 'soc'
+
+Change DT node named 'axi' to 'soc' so it matches ARCH_BCM2835.
+The VC4 bootloader fills in certain properties in the 'axi' subtree,
+but since this is part of an upstreaming effort, the name is changed.
+
+Signed-off-by: Noralf Tronnes notro@tronnes.org
+---
+ arch/arm/boot/dts/bcm2708.dtsi |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/bcm2708.dtsi b/arch/arm/boot/dts/bcm2708.dtsi
+index 3f884b3aad57..e02e67bf6886 100644
+--- a/arch/arm/boot/dts/bcm2708.dtsi
++++ b/arch/arm/boot/dts/bcm2708.dtsi
+@@ -14,7 +14,7 @@
+ 		bootargs = "console=ttyAMA0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ";
+ 	};
+ 
+-	axi {
++	soc {
+ 		compatible = "simple-bus";
+ 		#address-cells = <1>;
+ 		#size-cells = <1>;
