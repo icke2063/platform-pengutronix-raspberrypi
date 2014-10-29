@@ -1,0 +1,30 @@
+From: Phil Elwell <phil@raspberrypi.org>
+Date: Wed, 15 Oct 2014 11:34:37 +0100
+Subject: [PATCH] bcm2708: Eliminate i2s debugfs directory error
+
+Qualify the two regmap ranges uses by bcm2708-i2s ('-i2s' and '-clk')
+to avoid the name clash when registering debugfs entries.
+---
+ sound/soc/bcm/bcm2708-i2s.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/sound/soc/bcm/bcm2708-i2s.c b/sound/soc/bcm/bcm2708-i2s.c
+index 902398414096..3fcb740aba28 100644
+--- a/sound/soc/bcm/bcm2708-i2s.c
++++ b/sound/soc/bcm/bcm2708-i2s.c
+@@ -853,6 +853,7 @@ static const struct regmap_config bcm2708_regmap_config[] = {
+ 		.precious_reg = bcm2708_i2s_precious_reg,
+ 		.volatile_reg = bcm2708_i2s_volatile_reg,
+ 		.cache_type = REGCACHE_RBTREE,
++		.name = "i2s",
+ 	},
+ 	{
+ 		.reg_bits = 32,
+@@ -861,6 +862,7 @@ static const struct regmap_config bcm2708_regmap_config[] = {
+ 		.max_register = BCM2708_CLK_PCMDIV_REG,
+ 		.volatile_reg = bcm2708_clk_volatile_reg,
+ 		.cache_type = REGCACHE_RBTREE,
++		.name = "clk",
+ 	},
+ };
+ 

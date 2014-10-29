@@ -1,0 +1,20 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Sun, 26 Oct 2014 14:21:26 +0000
+Subject: [PATCH] config: remove CONFIG_DEBUG_INFO
+
+---
+ arch/arm/configs/bcmrpi_defconfig |    1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm/configs/bcmrpi_defconfig b/arch/arm/configs/bcmrpi_defconfig
+index 4cd81241999a..4a14387705b9 100644
+--- a/arch/arm/configs/bcmrpi_defconfig
++++ b/arch/arm/configs/bcmrpi_defconfig
+@@ -1082,7 +1082,6 @@ CONFIG_NLS_KOI8_U=m
+ CONFIG_DLM=m
+ CONFIG_PRINTK_TIME=y
+ CONFIG_BOOT_PRINTK_DELAY=y
+-CONFIG_DEBUG_INFO=y
+ CONFIG_DEBUG_STACK_USAGE=y
+ CONFIG_DEBUG_MEMORY_INIT=y
+ CONFIG_DETECT_HUNG_TASK=y

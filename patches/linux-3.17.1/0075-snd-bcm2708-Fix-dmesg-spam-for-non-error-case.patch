@@ -1,0 +1,21 @@
+From: popcornmix <popcornmix@gmail.com>
+Date: Mon, 20 Oct 2014 14:05:01 +0100
+Subject: [PATCH] snd-bcm2708: Fix dmesg spam for non-error case
+
+---
+ sound/arm/bcm2835-vchiq.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/arm/bcm2835-vchiq.c b/sound/arm/bcm2835-vchiq.c
+index cfa669ec57eb..3c953811a038 100755
+--- a/sound/arm/bcm2835-vchiq.c
++++ b/sound/arm/bcm2835-vchiq.c
+@@ -556,7 +556,7 @@ int bcm2835_audio_set_ctls(bcm2835_chip_t * chip)
+ 					LOG_ERR("Couldn't set the controls for stream %d\n", i);
+ 					ret = -1;
+ 				 }
+-			else LOG_ERR(" Controls set for stream %d\n", i);
++			else LOG_DBG(" Controls set for stream %d\n", i);
+ 		}
+ 	}
+ 	LOG_DBG(" .. OUT ret=%d\n", ret);
